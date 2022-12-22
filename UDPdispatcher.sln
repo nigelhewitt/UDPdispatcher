@@ -18,6 +18,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "UnitTest", "UnitTest\UnitTest.vcxproj", "{3B27B523-5192-48EA-85C7-0A44A6688E84}"
 EndProject
+Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "UPDSetup", "UPDSetup\UPDSetup.vdproj", "{FFFCC045-0C52-4A14-BF4F-08B33DFE7A94}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -58,6 +60,11 @@ Global
 		{3B27B523-5192-48EA-85C7-0A44A6688E84}.Release|x64.Build.0 = Release|x64
 		{3B27B523-5192-48EA-85C7-0A44A6688E84}.Release|x86.ActiveCfg = Release|Win32
 		{3B27B523-5192-48EA-85C7-0A44A6688E84}.Release|x86.Build.0 = Release|Win32
+		{FFFCC045-0C52-4A14-BF4F-08B33DFE7A94}.Debug|x64.ActiveCfg = Debug
+		{FFFCC045-0C52-4A14-BF4F-08B33DFE7A94}.Debug|x86.ActiveCfg = Debug
+		{FFFCC045-0C52-4A14-BF4F-08B33DFE7A94}.Release|x64.ActiveCfg = Release
+		{FFFCC045-0C52-4A14-BF4F-08B33DFE7A94}.Release|x64.Build.0 = Release
+		{FFFCC045-0C52-4A14-BF4F-08B33DFE7A94}.Release|x86.ActiveCfg = Release
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
