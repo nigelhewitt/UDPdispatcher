@@ -55,11 +55,8 @@ void _server::worker()
 		// is there anything to send (and is there anybody to send too yet)?
 		if(client_addr.sin_family!=0 && !toSend.empty() && WillNotBlock(server_socket, SKT_WRITE)){
 			blob b = toSend.dequeue();
-			const char* p;
-			int n;
-			b.pack(p, n);
 			// send the message
-			if(sendto(server_socket, p, n, 0, (sockaddr*)&client_addr, sizeof sockaddr_in) == SOCKET_ERROR)
+			if(sendto(server_socket, (const char*)b.data, b.length, 0, (sockaddr*)&client_addr, sizeof sockaddr_in) == SOCKET_ERROR)
 				stop = error("S:", WSAGetLastError());
 			else
 				++nSent;

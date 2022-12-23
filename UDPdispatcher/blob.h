@@ -23,12 +23,9 @@ public:
 	~blob(){
 		delete[] data;
 	}
-	void pack(const char* &p, int &n){	// blob to byte stream for UDP
-		p = (const char*)data;
-		n = length;
-	}
 	const char* unpack(const char* prefix);		// blob to readable
 
 	byte* data{};
 	int	  length{};
+	friend class _server;
 };

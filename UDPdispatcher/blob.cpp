@@ -55,21 +55,24 @@ const char* dump(const byte* p, int cb)
 }
 const char* blob::unpack(const char *prefix)
 {
-	static char temp[500];
+	static char temp[500]{};
 
-	if(length<8){
-		sprintf_s(temp, sizeof temp, "%s SHORT %d", prefix, length);
-		return temp;
-	}
+	sprintf_s(temp, sizeof temp, "%-3s %3d: ", prefix, length);
 
-	if(swap(*(DWORD*)data)!=0xadbccbda){
-		sprintf_s(temp, sizeof temp, "%s BAD %d", prefix, length);
-		return temp;
+	int i = (int)strlen(temp), j=0;
+	// we show ASCII characters only and uses a singe dot for all non-ASCII
+	bool dot=false;						// set after one dot
+	while(i<sizeof temp-1 && j<length){
+		char c = data[j++];
+		if(c>=0x20 && c<0x7f){
+			temp[i++] = c;
+			dot = false;
+		}
+		else if(!dot){
+			temp[i++] = '·';
+			dot = true;
+		}
 	}
-	if(length>64){
-		sprintf_s(temp, sizeof temp, "%s OK %d", prefix, length);
-//		strcpy_s(temp, sizeof temp, (const char*)&data[44+8]);
-		return temp;
-	}
-	return nullptr;
+	temp[i] = 0;
+	return temp;
 }

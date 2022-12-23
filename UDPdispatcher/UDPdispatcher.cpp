@@ -52,10 +52,11 @@ INT_PTR CALLBACK EditClient(HWND hDlg, UINT uMessage, WPARAM wParam, LPARAM lPar
 
 char szTraffic[5000]{};	// nominal amount of text
 int nTraffic{};
+bool bAutoScroll{true}, bFreeze{false};
 
 void AddTraffic(const char* text)
 {
-	if(hTraffic){
+	if(hTraffic && !bFreeze){
 		int i = (int)strlen(text)+2;				// how much text to add
 		if(i>sizeof szTraffic) return;				// not even going to consider it, that's probably an unterminated string
 
@@ -75,6 +76,8 @@ void AddTraffic(const char* text)
 		strcat_s(szTraffic, sizeof szTraffic, "\r\n");
 		nTraffic += i;
 		SetDlgItemText(hTraffic, IDC_TRAFFIC, szTraffic);
+		if(bAutoScroll)
+			SendMessage(GetDlgItem(hTraffic, IDC_TRAFFIC), EM_LINESCROLL, 0, 100);
 	}
 }
 void clearTraffic()
@@ -84,15 +87,26 @@ void clearTraffic()
 	SetDlgItemText(hTraffic, IDC_TRAFFIC, szTraffic);
 }
 
+
 INT_PTR CALLBACK TrafficDialog(HWND hDlg, UINT uMessage, WPARAM wParam, LPARAM lParam)
 {
 	switch(uMessage){
 	case WM_INITDIALOG:
 		SetDlgItemText(hDlg, IDC_TRAFFIC, szTraffic);
+		CheckDlgButton(hDlg, IDC_AUTOSCROLL, bAutoScroll ? BST_CHECKED : BST_UNCHECKED);
+		CheckDlgButton(hDlg, IDC_FREEZE, bFreeze ? BST_CHECKED : BST_UNCHECKED);
 		return (INT_PTR)TRUE;
 
 	case WM_COMMAND:
 		switch LOWORD(wParam) {
+		case IDC_TRAFFIC:
+			bAutoScroll = IsDlgButtonChecked(hDlg, IDC_AUTOSCROLL)==BST_CHECKED;
+			return (INT_PTR)TRUE;
+
+		case IDC_FREEZE:
+			bFreeze = IsDlgButtonChecked(hDlg, IDC_FREEZE)==BST_CHECKED;
+			return (INT_PTR)TRUE;
+
 		case IDCANCEL:							// clear
 			clearTraffic();
 			return (INT_PTR)TRUE;
