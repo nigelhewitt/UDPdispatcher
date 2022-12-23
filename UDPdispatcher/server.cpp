@@ -18,8 +18,9 @@ void _server::worker()
 {
 	// create socket
 	SOCKET server_socket;
-	if((server_socket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == INVALID_SOCKET){ // <<< UDP socket
-		stop = error();
+	while((server_socket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == INVALID_SOCKET){ // <<< UDP socket
+		if(error("S:", WSAGetLastError()))
+			return;
 	}
 
 	// setup address structure
@@ -29,41 +30,37 @@ void _server::worker()
 	server_addr.sin_port = htons(port);								// fixed port
 
 	// bind
-	if(bind(server_socket, (sockaddr*)&server_addr, sizeof server_addr) == SOCKET_ERROR){
-		stop = error();
-	}
+	if(bind(server_socket, (sockaddr*)&server_addr, sizeof server_addr) == SOCKET_ERROR)
+		stop = error("S:", WSAGetLastError());
+
 	// communication loop
 	sockaddr_in client_addr{};			// save the client id we are receiving from so we can transmit back to it
 	while(!stop){
-		// fix the socket so it doesn't block
-		DWORD mSecs = 1000;
-		setsockopt(server_socket, SOL_SOCKET, SO_RCVTIMEO, (char*)&mSecs, sizeof mSecs);
+		// first do the read
+		if(WillNotBlock(server_socket, SKT_READ)){
+			// read the data
+			char message[512] = {};
+			int slen = sizeof sockaddr_in;
+			int message_length{};
+			if((message_length = recvfrom(server_socket, message, sizeof message, 0, (sockaddr*)&client_addr, &slen)) != SOCKET_ERROR){
+				blob *b = new blob(message, message_length);
+				received.enqueue(*b);
+				++nRecv;
+				continue;					// if we receive try again immediately
+			}
+			// it didn't read
+			stop = error("S:", WSAGetLastError());
+		}
 
-		// try to receive some data, this is normally a blocking call
-		char message[512] = {};
-		int slen = sizeof sockaddr_in;
-		int message_length{};
-		if((message_length = recvfrom(server_socket, message, sizeof message, 0, (sockaddr*)&client_addr, &slen)) != SOCKET_ERROR){
-			blob *b = new blob(message, message_length);
-			received.enqueue(*b);
-			++nRecv;
-			continue;					// if we receive try again immediately
-		}
-		// it didn't read, was it just a normal timeout
-		DWORD err = WSAGetLastError();
-		if(err!=10060){				// ie. no data waiting
-			stop = error(err);
-		}
 		// is there anything to send (and is there anybody to send too yet)?
-		if(client_addr.sin_family!=0 && !toSend.empty()){
-			blob b = toSend.dequeue();		// initialisation so not a copy
+		if(client_addr.sin_family!=0 && !toSend.empty() && WillNotBlock(server_socket, SKT_WRITE)){
+			blob b = toSend.dequeue();
 			const char* p;
 			int n;
 			b.pack(p, n);
 			// send the message
-			if(sendto(server_socket, p, n, 0, (sockaddr*)&client_addr, sizeof sockaddr_in) == SOCKET_ERROR){
-				stop = error();
-			}
+			if(sendto(server_socket, p, n, 0, (sockaddr*)&client_addr, sizeof sockaddr_in) == SOCKET_ERROR)
+				stop = error("S:", WSAGetLastError());
 			else
 				++nSent;
 			continue;			// straight back to stop check

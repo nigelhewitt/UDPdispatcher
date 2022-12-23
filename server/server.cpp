@@ -2,6 +2,7 @@
 //
 
 #include <cstdio>
+#include <conio.h>
 #include <winsock2.h>
 #include <Ws2tcpip.h>
 
@@ -21,6 +22,16 @@ bool init()
 		return false;
 	}
 	return true;
+}
+
+enum SKT_MODE { SKT_READ, SKT_WRITE };
+bool WillNotBlock(SOCKET socket, SKT_MODE mode)
+{
+	WSAPOLLFD skt{};					// check if the socket can read/write without blocking
+	skt.fd = socket;
+	skt.events = mode==SKT_READ ? POLLRDNORM : POLLWRNORM;
+	skt.revents = 0;
+	return WSAPoll(&skt, 1, 0)>0;
 }
 
 bool serve(u_short port)		// aka 16 bit
@@ -46,32 +57,37 @@ bool serve(u_short port)		// aka 16 bit
 	}
 	printf("Bind done\n");
 
+	sockaddr_in client{};
 	while(true){
-		printf("Waiting for data...\n");
-		fflush(stdout);
-		char message[BUFLEN] = {};
 
-		// try to receive some data, this is a blocking call
-		int message_len;
-		sockaddr_in client;
-		int slen = sizeof sockaddr_in;
-		if(message_len = recvfrom(server_socket, message, BUFLEN, 0, (sockaddr*)&client, &slen) == SOCKET_ERROR){
-			printf("recvfrom() failed with error code: %d", WSAGetLastError());
-			return false;
+		if(WillNotBlock(server_socket, SKT_READ)){
+			fflush(stdout);
+			char message[BUFLEN] = {};
+
+			// try to receive some data
+			int message_len;
+			int slen = sizeof sockaddr_in;
+			if(message_len = recvfrom(server_socket, message, BUFLEN, 0, (sockaddr*)&client, &slen) == SOCKET_ERROR){
+				printf("recvfrom() failed with error code: %d", WSAGetLastError());
+				return false;
+			}
+
+			// print details of the client/peer and the data received
+			printf("Received packet from %s:%d of %d bytes\n", inet_ntoa(client.sin_addr), ntohs(client.sin_port), message_len);
+//			printf("Data: %d\n", message_len);
 		}
+		if(_kbhit()){
+			printf("\r\nEnter reply: ");
+			char message[BUFLEN] = {};
+			gets_s(message, BUFLEN);
 
-		// print details of the client/peer and the data received
-		printf("Received packet from %s:%d\n", inet_ntoa(client.sin_addr), ntohs(client.sin_port));
-		printf("Data: %s\n", message);
-
-		printf("Enter reply: ");
-		gets_s(message, BUFLEN);
-
-		// reply to the client
-		if(sendto(server_socket, message, (int)strlen(message), 0, (sockaddr*)&client, sizeof sockaddr_in) == SOCKET_ERROR){
-			printf("sendto() failed with error code: %d", WSAGetLastError());
-			return false;
+			// reply to the client
+			if(sendto(server_socket, message, (int)strlen(message), 0, (sockaddr*)&client, sizeof sockaddr_in) == SOCKET_ERROR){
+				printf("sendto() failed with error code: %d", WSAGetLastError());
+				return false;
+			}
 		}
+		Sleep(1);
 	}
 	closesocket(server_socket);
 	return true;

@@ -12,6 +12,8 @@
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 
 #include <windows.h>
+#include <winsock2.h>
+#include <ws2tcpip.h>
 #include <commctrl.h>
 #include <commdlg.h>
 
@@ -20,8 +22,6 @@
 #include <cstdlib>
 #include <direct.h>
 #include <shlobj_core.h>
-#include <winsock2.h>
-#include <ws2tcpip.h>
 
 // std:: library header files
 #include <vector>

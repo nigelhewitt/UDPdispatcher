@@ -8,16 +8,20 @@
 // handler to unpack Windows error codes into text  (Work in Wide so we can handle anything)
 //=====================================================================================================
 
-bool error(DWORD err)
+bool error(const char* id, DWORD err)
 {
-	char temp[200];
+	char temp[500];
 	int cb = sizeof temp;
 	if(err == 0)
 		err = GetLastError();
-	FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, nullptr, err, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), temp, sizeof temp, nullptr);
+	strcpy_s(temp, sizeof temp, id);
+	int n = (int)strlen(temp);
+	sprintf_s(temp+n, sizeof temp-n, " Network Error %d: stop system?\r\n", err);
+	n = (int)strlen(temp);
+	FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, nullptr, err, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), temp+n, sizeof temp-n, nullptr);
 	for(int i=(int)strlen(temp); isspace(temp[i-1]); temp[--i]=0);		// remove \r\n
 	AddTraffic(temp);
-	return MessageBox(hMain, temp, "System Error: stop system?", MB_YESNO)==IDYES;
+	return MessageBox(hMain, temp, "Network Error", MB_YESNO)==IDYES;
 }
 
 //=====================================================================================================
@@ -45,4 +49,15 @@ void utoa(char* p, int cb, unsigned int n)
 	_utoa(p, cb, n);
 	*p = 0;
 }
+//=================================================================================================
+// poll a socket for read or write to see if it will block
+//=================================================================================================
 
+bool WillNotBlock(SOCKET socket, SKT_MODE mode)
+{
+	WSAPOLLFD skt{};					// check if the socket can read/write without blocking
+	skt.fd = socket;
+	skt.events = mode==SKT_READ ? POLLRDNORM : POLLWRNORM;
+	skt.revents = 0;
+	return WSAPoll(&skt, 1, 0)>0;
+}

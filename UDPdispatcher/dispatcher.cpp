@@ -42,8 +42,9 @@ void _dispatcher::worker()
 	server = new _server(config.server.port);
 
 	// make the clients
+	int id = 1;
 	for(_config::client_details cd : config.clients){
-		_client *c = new _client(cd.url, cd.port);
+		_client *c = new _client(id++, cd.url, cd.port);
 		clients.push_back(c);
 	}
 
@@ -62,7 +63,9 @@ void _dispatcher::worker()
 			if(!c->received.empty()){
 				blob b = c->received.dequeue();
 				server->toSend.enqueue(b);
-				const char* r = b.unpack("C:");
+				char temp[20];
+				sprintf_s(temp, sizeof temp, "C%d:", c->id);
+				const char* r = b.unpack(temp);
 				if(r)
 					AddTraffic(r);
 			}
