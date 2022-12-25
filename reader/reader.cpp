@@ -4,20 +4,12 @@
 // Server.cpp : This file contains the 'main' function. Program execution begins and ends there.
 //
 
-#include <stdint.h>
-#include <cstdio>
-#include <conio.h>
-#include <winsock2.h>
-#include <Ws2tcpip.h>
+#include "reader.h"
 
 #pragma comment(lib,"ws2_32.lib") // Winsock Library
 #pragma warning(disable:4996) 
 
-// in unpack.cpp
-bool unpack(FILE* fh, byte* &p, int &cb);
-void dump(FILE* f, void* buffer, int cb);
-
-#define PORT 2239
+u_short uPort{2239};			// port to receive on
 
 bool init()
 {
@@ -60,7 +52,7 @@ bool serve()
 	sockaddr_in server_addr;
 	server_addr.sin_family = AF_INET;
 	inet_pton(AF_INET, "0.0.0.0", &server_addr.sin_addr.s_addr);			// new format
-	server_addr.sin_port = htons(PORT);
+	server_addr.sin_port = htons(uPort);
 
 	// bind
 	if(bind(server_socket, (sockaddr*)&server_addr, sizeof server_addr) == SOCKET_ERROR){
@@ -82,21 +74,25 @@ bool serve()
 	while(true){
 		if(WillNotBlock(server_socket, SKT_READ)){
 			// try to receive some data
-			char message[512]{};
+			char data[512]{};
 			int slen = sizeof sockaddr_in;
-			int message_len{};
-			if((message_len = recvfrom(server_socket, message, sizeof message, 0, (sockaddr*)&client, &slen)) == SOCKET_ERROR){
+			int data_length{};
+			if((data_length = recvfrom(server_socket, data, sizeof data, 0, (sockaddr*)&client, &slen)) == SOCKET_ERROR){
 				printf("recvfrom() failed with error code: %d", WSAGetLastError());
 				return false;
 			}
 
 			// print details of the client/peer and the data received
-			printf("Received packet from %s:%d of %d bytes\n", inet_ntoa(client.sin_addr), ntohs(client.sin_port), message_len);
-			int cb = message_len;
-			byte* bx = (byte*)message;
-			if(!unpack(fh, bx, cb))
-				dump(fh, message, message_len);
-//			printf("Data: %s\n", message);
+			printf("Received packet from %s:%d of %d bytes\n", inet_ntoa(client.sin_addr), ntohs(client.sin_port), data_length);
+			int cb = data_length;
+			byte* bx = (byte*)data;
+			message* m = unpack(bx, cb);
+			if(m){
+				m->print(fh);
+				delete m;
+			}
+			else
+				dump(fh, data, data_length);
 		}
 #if false
 		char message[512]{};
@@ -133,7 +129,7 @@ bool serve()
 	return true;
 }
 
-int main()
+int main(int argc, char* argv[])
 {
 	printf("UDP reader");
 	if(!init()) exit(1);

@@ -69,6 +69,6 @@ void _dispatcher::worker()
 				if(r)
 					AddTraffic(r);
 			}
-		Sleep(1);
+		Sleep(20);
 	}
 }

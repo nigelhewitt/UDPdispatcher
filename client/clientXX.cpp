@@ -1,4 +1,4 @@
-﻿// client.cpp : This file contains the 'main' function. Program execution begins and ends there.
+// client.cpp : This file contains the 'main' function. Program execution begins and ends there.
 //
 
 #include <cstdio>
@@ -9,7 +9,7 @@
 
 #define SERVER "127.0.0.1"  // or "localhost" - ip address of UDP server
 #define BUFLEN 512  // max length of answer
-#define PORT 8888  // the port on which to listen for incoming data
+#define PORT 2239  // the port on which to listen for incoming data
 
 //=====================================================================================================
 // handler to unpack Windows error codes into text  (Work in Wide so we can handle anything)
@@ -112,10 +112,4 @@ int main()
 
 	client(SERVER, PORT);
 	WSACleanup();
-
-#ifndef _DEBUG
-	printf("Finished\n");
-	char temp[1000];
-	gets_s(temp, sizeof temp);
-#endif
 }

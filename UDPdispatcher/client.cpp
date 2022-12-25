@@ -31,12 +31,25 @@ again:
 			return;
 	}
 
-	// setup the address structure
-	sockaddr_in server;
-	memset((char*)&server, 0, sizeof server);
-	server.sin_family = AF_INET;
-	server.sin_port = htons(port);
-	inet_pton(AF_INET, url, &server.sin_addr.S_un.S_addr);
+#if false
+	DWORD bReuse{true};
+	setsockopt(client_socket, SOL_SOCKET, SO_REUSEADDR, (char*)&bReuse, sizeof bReuse);
+
+	// setup client address structure
+	sockaddr_in client_addr{};
+	client_addr.sin_family = AF_INET;
+	inet_pton(AF_INET, "0.0.0.0", &client_addr.sin_addr.s_addr);
+	client_addr.sin_port = htons(port);								// fixed port
+
+	// bind
+	if(bind(client_socket, (sockaddr*)&client_addr, sizeof client_addr) == SOCKET_ERROR)
+		stop = error(szID, WSAGetLastError());
+#endif
+	// setup the server address structure
+	sockaddr_in server_addr{};
+	server_addr.sin_family = AF_INET;
+	server_addr.sin_port = htons(port);
+	inet_pton(AF_INET, url, &server_addr.sin_addr.S_un.S_addr);
 
 	// communication loop
 	while(!stop){
@@ -44,7 +57,7 @@ again:
 		if(!toSend.empty() && WillNotBlock(client_socket, SKT_WRITE)){
 			blob b = toSend.dequeue();
 			// send the message
-			if(sendto(client_socket, (char*)b.data, b.length, 0, (sockaddr*)&server, sizeof sockaddr_in) == SOCKET_ERROR)
+			if(sendto(client_socket, (char*)b.data, b.length, 0, (sockaddr*)&server_addr, sizeof sockaddr_in) == SOCKET_ERROR)
 				stop = error(szID, WSAGetLastError());
 			else{
 				++nSent;
@@ -59,7 +72,7 @@ again:
 			char data[512] = {};
 			int slen = sizeof sockaddr_in;
 			int data_length;
-			if((data_length = recvfrom(client_socket, data, sizeof data, 0, (sockaddr*)&server, &slen)) != SOCKET_ERROR){
+			if((data_length = recvfrom(client_socket, data, sizeof data, 0, (sockaddr*)&server_addr, &slen)) != SOCKET_ERROR){
 				blob *b = new blob(data, data_length);
 				received.enqueue(*b);
 				++nRecv;
@@ -76,7 +89,7 @@ again:
 			}
 			stop = error(szID, err);
 		}
-		Sleep(1);		// relinquish our time slot
+		Sleep(20);		// relinquish our time slot
 	}
 	bActive = false;
 	closesocket(client_socket);

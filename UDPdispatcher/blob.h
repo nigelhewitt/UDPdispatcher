@@ -12,7 +12,7 @@ public:
 		length = cb;
 		data   = new byte[length+1];
 		memcpy(data, text, length);
-		data[length] = 0;				// the debugger loves to show it as a null terminated string and all goes wrong on me
+		data[length] = 0;				// the debugger loves to show it as a null terminated string and that all goes wrong on me
 	}
 	blob(const blob& b){				// smart copy
 		length = b.length;

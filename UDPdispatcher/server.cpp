@@ -26,7 +26,7 @@ void _server::worker()
 	// setup address structure
 	sockaddr_in server_addr{};
 	server_addr.sin_family = AF_INET;
-	inet_pton(AF_INET, "0.0.0.0", &server_addr.sin_addr.s_addr);	// any address
+	inet_pton(AF_INET, "127.0.0.1", &server_addr.sin_addr.s_addr);
 	server_addr.sin_port = htons(port);								// fixed port
 
 	// bind
@@ -39,7 +39,7 @@ void _server::worker()
 		// first do the read
 		if(WillNotBlock(server_socket, SKT_READ)){
 			// read the data
-			char message[512] = {};
+			char message[512]{};
 			int slen = sizeof sockaddr_in;
 			int message_length{};
 			if((message_length = recvfrom(server_socket, message, sizeof message, 0, (sockaddr*)&client_addr, &slen)) != SOCKET_ERROR){
@@ -63,7 +63,7 @@ void _server::worker()
 			continue;			// straight back to stop check
 		}
 
-		Sleep(1);		// relinquish our time slot
+		Sleep(20);		// relinquish our time slot
 	}
 	closesocket(server_socket);
 }
