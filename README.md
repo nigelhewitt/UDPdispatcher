@@ -42,7 +42,13 @@ within a few seconds they are back up and running again.
 I have added 'reader' that can be set up as another host and will dump certain
 WSJT-X packets to a text file. It is intended as a cut-and-stick source for
 things that would use those packets to do something useful for me. Currently
-it is coded to read from port 2239 but I'll sort out that later..
+it is coded to read from port 2239 but I'll sort out that later...
+
+I also put two powershall scripts in the 'Other FT-8 items' folder.
+ft-8.ps1 is run by an icon on my desktop to start the system up and that also
+starts off ft-8-mod.ps1 that watches for the 'Log QSO' window and goes 'Bong'
+so I don't miss anything when calling CQ into the darkness. include.ps1 is dot
+included into my $profile to provide the extra PowerShell functions I want.
 
 The .msi file contains Dispatcher and reader and is tested on current Windows 11.
 
